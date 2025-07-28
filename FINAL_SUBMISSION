@@ -52,12 +52,7 @@ class Player {
         Tile.AllDistances = allDistances;
     }
 
-    /**
-     * Performs a Breadth-First Search (BFS) using the pre-computed neighbors.
-     *
-     * @param startTile The tile to start the search from.
-     * @return A map containing all reachable tiles and their distances from the start tile.
-     */
+    // Performs a Breadth-First Search (BFS) using the pre-computed neighbors.
     private static Map<Tile, Integer> bfs(Tile startTile) {
         Map<Tile, Integer> distances = new HashMap<>();
         Queue<Tile> queue = new ArrayDeque<>();
@@ -1048,14 +1043,6 @@ class State {
         List<Tile> possibleMoveTiles = new ArrayList<>(agent.getPositionAsTile().neighbors);
         possibleMoveTiles.add(agent.getPositionAsTile());
 
-        /*
-        System.err.print("TEST Shoot ");
-        currentState.allAgents.values().forEach(a -> System.err.print(a.agentId + "->" + a.shootId + " "));
-        System.err.print("\nTEST Throw ");
-        currentState.allAgents.values().forEach(a -> System.err.print(a.agentId + "->" + a.bombTarget + " "));
-        System.err.print("\n");
-        */
-
         for (Tile moveTile : possibleMoveTiles) {
              if (moveTile.value != 0) continue;
              double score = evaluateMove(agent, moveTile, currentState, agentAdvantage, teamTarget, strategicGoal, claimedTiles, turnCounter);
@@ -1187,123 +1174,5 @@ class State {
         System.err.println(", Teamwork: " + (score - oS));
 
         return score;
-    }
-}
-
-/**
- * A class to hold the result of the territory calculation.
- */
-class TerritoryResult {
-    int player0Territory;
-    int player1Territory;
-
-    public TerritoryResult(int player0Territory, int player1Territory) {
-        this.player0Territory = player0Territory;
-        this.player1Territory = player1Territory;
-    }
-
-    @Override
-    public String toString() {
-        return "Player 0 Territory: " + player0Territory + ", Player 1 Territory: " + player1Territory;
-    }
-}
-
-/**
- * Main class to calculate territory control.
- */
-class TerritoryCalculator {
-
-    /**
-     * Calculates the number of tiles closer to each player's agents.
-     *
-     * @param map       A 2D array representing the game map. Assumed to be non-empty.
-     * @param agents    A collection of all agents on the map.
-     * @return          A TerritoryResult object containing the territory count for each player.
-     */
-    public static TerritoryResult calculateTerritory(Tile[][] map, Collection<Agent> agents) {
-        if (map == null || map.length == 0 || map[0].length == 0) {
-            return new TerritoryResult(0, 0);
-        }
-
-        int width = map.length;
-        int height = map[0].length;
-
-        // Step 1: Create distance maps for each player.
-        // Initialize with a large value to represent infinity.
-        int[][] distancesToPlayer0 = new int[width][height];
-        int[][] distancesToPlayer1 = new int[width][height];
-
-        for (int i = 0; i < width; i++) {
-            Arrays.fill(distancesToPlayer0[i], Integer.MAX_VALUE);
-            Arrays.fill(distancesToPlayer1[i], Integer.MAX_VALUE);
-        }
-
-        // Step 2: Run a multi-source BFS for each player to calculate shortest distances.
-        calculateDistancesForPlayer(map, agents, 0, distancesToPlayer0);
-        calculateDistancesForPlayer(map, agents, 1, distancesToPlayer1);
-
-        // Step 3: Compare the distance maps to determine territory.
-        int player0Territory = 0;
-        int player1Territory = 0;
-
-        for (int i = 0; i < width; i++) {
-            for (int j = 0; j < height; j++) {
-                if (distancesToPlayer0[i][j] < distancesToPlayer1[i][j]) {
-                    player0Territory++;
-                } else if (distancesToPlayer1[i][j] < distancesToPlayer0[i][j]) {
-                    player1Territory++;
-                }
-                // If distances are equal, the tile is contested and belongs to neither.
-            }
-        }
-
-        return new TerritoryResult(player0Territory, player1Territory);
-    }
-
-    /**
-     * Performs a multi-source Breadth-First Search (BFS) to find the shortest distance
-     * from every tile to the nearest agent of a specific player.
-     *
-     * @param map           The game map.
-     * @param allAgents     The collection of all agents.
-     * @param player        The player to calculate distances for (0 or 1).
-     * @param distanceMap   The 2D array to store the calculated distances.
-     */
-    private static void calculateDistancesForPlayer(Tile[][] map, Collection<Agent> allAgents, int player, int[][] distanceMap) {
-        int width = map.length;
-        int height = map[0].length;
-
-        // Use ArrayDeque for a more efficient queue implementation.
-        Queue<Tile> queue = new ArrayDeque<>();
-
-        // Initialize the queue with all agents of the specified player.
-        for (Agent agent : allAgents) {
-            if (agent.player == player && agent.active) {
-                distanceMap[agent.x][agent.y] = 0;
-                queue.add(map[agent.x][agent.y]);
-            }
-        }
-
-        // Standard BFS logic
-        int[] dx = {0, 0, 1, -1}; // Directions for neighbors (right, left, down, up)
-        int[] dy = {1, -1, 0, 0};
-
-        while (!queue.isEmpty()) {
-            Tile current = queue.poll();
-
-            for (int i = 0; i < 4; i++) {
-                int newX = current.x + dx[i];
-                int newY = current.y + dy[i];
-
-                // Check if the neighbor is within map bounds
-                if (newX >= 0 && newX < width && newY >= 0 && newY < height) {
-                    // If we found a shorter path to this neighbor, update it and add to queue
-                    if (distanceMap[newX][newY] > distanceMap[current.x][current.y] + 1) {
-                        distanceMap[newX][newY] = distanceMap[current.x][current.y] + 1;
-                        queue.add(map[newX][newY]);
-                    }
-                }
-            }
-        }
     }
 }
