@@ -17,8 +17,6 @@ Main agent ignorances:
 - Beyond probabilistic heuristics, the agent only has a 1-turn search depth and doesn't search extensively over enemy's possible moves
 - The player code doesn't keep track of the point score or calculate that score when evaluating it's move
 
-See the statement below: 
-
 ## Statement
 
 ### 	Goal
